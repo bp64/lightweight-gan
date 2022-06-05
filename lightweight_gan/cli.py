@@ -1,9 +1,6 @@
 import os
-import random
-from datetime import datetime
 
 import fire
-import numpy as np
 import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
@@ -12,32 +9,7 @@ from tqdm import tqdm
 
 from lightweight_gan import NanException, Trainer
 from lightweight_gan.diff_augment_test import DiffAugmentTest
-
-
-def exists(val):
-    return val is not None
-
-
-def default(val, d):
-    return val if exists(val) else d
-
-
-def cast_list(el):
-    return el if isinstance(el, list) else [el]
-
-
-def timestamped_filename(prefix="generated-"):
-    now = datetime.now()
-    timestamp = now.strftime("%m-%d-%Y_%H-%M-%S")
-    return f"{prefix}{timestamp}"
-
-
-def set_seed(seed):
-    torch.manual_seed(seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    np.random.seed(seed)
-    random.seed(seed)
+from lightweight_gan.utils import cast_list, current_iso_datetime, default
 
 
 def run_training(
@@ -183,7 +155,7 @@ def train_from_folder(
     if generate:
         model = Trainer(**model_args)
         model.load(load_from)
-        samples_name = timestamped_filename()
+        samples_name = current_iso_datetime()
         checkpoint = model.checkpoint_num
         dir_result = model.generate(
             samples_name, num_image_tiles, checkpoint, generate_types
@@ -194,7 +166,7 @@ def train_from_folder(
     if generate_interpolation:
         model = Trainer(**model_args)
         model.load(load_from)
-        samples_name = timestamped_filename()
+        samples_name = current_iso_datetime()
         model.generate_interpolation(
             samples_name,
             num_image_tiles,
