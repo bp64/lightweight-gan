@@ -26,6 +26,26 @@ def run_training(
     aim_repo,
     aim_run_hash,
 ):
+    """run training job
+
+    Args:
+        rank: int, id of process
+        world_size: int, number of processes participating in training
+        model_args: dict, arguments for model
+        data: dict, arguments for data
+        load_from: str, path to load model from
+        new: bool, whether to create new model
+        num_train_steps: int, number of training steps
+        name: str, name of training
+        seed: int, seed for random number generator
+        use_aim: bool, whether to use AIM
+        aim_repo: str, path to AIM repository
+        aim_run_hash: str, hash of AIM run
+
+    Returns:
+        None
+    """
+
     is_main = rank == 0
     is_ddp = world_size > 1
 
@@ -119,6 +139,62 @@ def train_from_folder(
     aim_run_hash=None,
     load_strict=True,
 ):
+    """train from folder
+
+    Args:
+        data: str, path to data
+        results_dir: str, path to results
+        models_dir: str, path to models
+        name: str, name of training
+        new: bool, whether to create new model
+        load_from: int, load model from this checkpoint
+        image_size: int, image size
+        optimizer: str, optimizer
+        fmap_max: int, fmap max
+        transparent: bool, whether to use transparent
+        greyscale: bool, whether to use greyscale
+        batch_size: int, batch size
+        gradient_accumulate_every: int, gradient accumulate every
+        num_train_steps: int, number of training steps
+        learning_rate: float, learning rate
+        save_every: int, save every
+        evaluate_every: int, evaluate every
+        generate: bool, whether to generate
+        generate_types: list, types of generation
+        generate_interpolation: bool, whether to use interpolation
+        aug_test: bool, whether to use augmentation test
+        aug_prob: float, probability of augmentation
+        aug_types: list, types of augmentation
+        dataset_aug_prob: float, probability of dataset augmentation
+        attn_res_layers: list, attention resolution layers
+        freq_chan_attn: bool, whether to use frequency channel attention
+        disc_output_size: int, discriminator output size
+        dual_contrast_loss: bool, whether to use dual contrast loss
+        antialias: bool, whether to use antialias
+        interpolation_num_steps: int, number of interpolation steps
+        save_frames: bool, whether to save frames
+        num_image_tiles: int, number of image tiles
+        num_workers: int, number of workers
+        multi_gpus: bool, whether to use multi gpu
+        calculate_fid_every: int, calculate fid every
+        calculate_fid_num_images: int, number of images to calculate fid
+        clear_fid_cache: bool, whether to clear fid cache
+        seed: int, seed for random number generator
+        amp: bool, whether to use amp
+        show_progress: bool, whether to show progress
+        use_aim: bool, whether to use AIM
+        aim_repo: str, path to AIM repository
+        aim_run_hash: str, hash of AIM run
+        load_strict: bool, whether to load strict
+
+    Returns:
+        None
+    """
+
+    assert (
+        torch.cuda.is_available()
+    ), "You need to have an Nvidia GPU with CUDA installed."
+
     num_image_tiles = default(num_image_tiles, 4 if image_size > 512 else 8)
 
     model_args = dict(
@@ -208,26 +284,25 @@ def train_from_folder(
             aim_repo,
             aim_run_hash,
         )
-        return
-
-    mp.spawn(
-        run_training,
-        args=(
-            world_size,
-            model_args,
-            data,
-            load_from,
-            new,
-            num_train_steps,
-            name,
-            seed,
-            use_aim,
-            aim_repo,
-            aim_run_hash,
-        ),
-        nprocs=world_size,
-        join=True,
-    )
+    else:
+        mp.spawn(
+            run_training,
+            args=(
+                world_size,
+                model_args,
+                data,
+                load_from,
+                new,
+                num_train_steps,
+                name,
+                seed,
+                use_aim,
+                aim_repo,
+                aim_run_hash,
+            ),
+            nprocs=world_size,
+            join=True,
+        )
 
 
 def main():
