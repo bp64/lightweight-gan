@@ -7,8 +7,9 @@ import torch.multiprocessing as mp
 from retry.api import retry_call
 from tqdm import tqdm
 
-from lightweight_gan import NanException, Trainer
 from lightweight_gan.diff_augment_test import DiffAugmentTest
+from lightweight_gan.exceptions import NanException
+from lightweight_gan.trainer import Trainer
 from lightweight_gan.utils import cast_list, current_iso_datetime, default, set_seed
 
 
