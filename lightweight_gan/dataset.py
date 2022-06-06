@@ -21,35 +21,30 @@ def convert_image_to(img_type, image):
     return image
 
 
-class identity(object):
-    def __call__(self, tensor):
+def identity(tensor):
+    return tensor
+
+
+def expand_greyscale(tensor, transparent):
+    channels = tensor.shape[0]
+    num_target_channels = 4 if transparent else 3
+
+    if channels == num_target_channels:
         return tensor
 
+    alpha = None
+    if channels == 1:
+        color = tensor.expand(3, -1, -1)
+    elif channels == 2:
+        color = tensor[:1].expand(3, -1, -1)
+        alpha = tensor[1:]
+    else:
+        raise Exception(f"image with invalid number of channels given {channels}")
 
-class expand_greyscale(object):
-    def __init__(self, transparent):
-        self.transparent = transparent
+    if not exists(alpha) and transparent:
+        alpha = torch.ones(1, *tensor.shape[1:], device=tensor.device)
 
-    def __call__(self, tensor):
-        channels = tensor.shape[0]
-        num_target_channels = 4 if self.transparent else 3
-
-        if channels == num_target_channels:
-            return tensor
-
-        alpha = None
-        if channels == 1:
-            color = tensor.expand(3, -1, -1)
-        elif channels == 2:
-            color = tensor[:1].expand(3, -1, -1)
-            alpha = tensor[1:]
-        else:
-            raise Exception(f"image with invalid number of channels given {channels}")
-
-        if not exists(alpha) and self.transparent:
-            alpha = torch.ones(1, *tensor.shape[1:], device=tensor.device)
-
-        return color if not self.transparent else torch.cat((color, alpha))
+    return color if not transparent else torch.cat((color, alpha))
 
 
 def resize_to_minimum_size(min_size, image):
@@ -83,11 +78,11 @@ class ImageDataset(Dataset):
         if transparent:
             num_channels = 4
             pillow_mode = "RGBA"
-            expand_fn = expand_greyscale(transparent)
+            expand_fn = partial(expand_greyscale, transparent=transparent)
         elif greyscale:
             num_channels = 1
             pillow_mode = "L"
-            expand_fn = identity()
+            expand_fn = identity
         else:
             num_channels = 3
             pillow_mode = "RGB"
