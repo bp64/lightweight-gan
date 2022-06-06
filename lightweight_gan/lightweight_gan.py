@@ -11,7 +11,8 @@ from kornia.filters import filter2d
 from torch import einsum, nn
 from torch.optim import Adam
 
-from lightweight_gan.diff_augment import DiffAugment, random_hflip
+from lightweight_gan.augmentations import random_hflip
+from lightweight_gan.diff_augment import DiffAugment
 from lightweight_gan.utils import (
     default,
     exists,

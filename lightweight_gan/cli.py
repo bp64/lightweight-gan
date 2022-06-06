@@ -95,6 +95,7 @@ def run_training(
 
 
 def train_from_folder(
+    train=False,
     data="./data",
     results_dir="./results",
     models_dir="./models",
@@ -148,6 +149,9 @@ def train_from_folder(
 
     Args:
         -- actual args for train_from_folder --
+        -- train command --
+        train: bool, whether to train
+
         -- generate command --
         generate: bool, whether to generate
         generate_types: list, types of generation
@@ -208,10 +212,6 @@ def train_from_folder(
     Returns:
         None
     """
-
-    assert (
-        torch.cuda.is_available()
-    ), "You need to have an Nvidia GPU with CUDA installed."
 
     num_image_tiles = default(num_image_tiles, 4 if image_size > 512 else 8)
 
@@ -285,28 +285,16 @@ def train_from_folder(
         )
         return
 
-    world_size = torch.cuda.device_count()
+    if train:
+        assert (
+            torch.cuda.is_available()
+        ), "You need to have an Nvidia GPU with CUDA installed."
+        world_size = torch.cuda.device_count()
 
-    if world_size == 1 or not multi_gpus:
-        run_training(
-            0,
-            1,
-            model_args,
-            data,
-            load_from,
-            new,
-            num_train_steps,
-            name,
-            seed,
-            use_aim,
-            aim_repo,
-            aim_run_hash,
-        )
-    else:
-        mp.spawn(
-            run_training,
-            args=(
-                world_size,
+        if world_size == 1 or not multi_gpus:
+            run_training(
+                0,
+                1,
                 model_args,
                 data,
                 load_from,
@@ -317,10 +305,26 @@ def train_from_folder(
                 use_aim,
                 aim_repo,
                 aim_run_hash,
-            ),
-            nprocs=world_size,
-            join=True,
-        )
+            )
+        else:
+            mp.spawn(
+                run_training,
+                args=(
+                    world_size,
+                    model_args,
+                    data,
+                    load_from,
+                    new,
+                    num_train_steps,
+                    name,
+                    seed,
+                    use_aim,
+                    aim_repo,
+                    aim_run_hash,
+                ),
+                nprocs=world_size,
+                join=True,
+            )
 
 
 def main():
