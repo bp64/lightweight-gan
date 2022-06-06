@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from lightweight_gan import NanException, Trainer
 from lightweight_gan.diff_augment_test import DiffAugmentTest
-from lightweight_gan.utils import cast_list, current_iso_datetime, default
+from lightweight_gan.utils import cast_list, current_iso_datetime, default, set_seed
 
 
 def run_training(
@@ -139,15 +139,45 @@ def train_from_folder(
     aim_run_hash=None,
     load_strict=True,
 ):
-    """train from folder
+    """available commands:
+        generate - generate images
+        generate_interpolation - generate images with interpolation
+        aug_test - test augmentation
+        else: train
 
     Args:
+        -- actual args for train_from_folder --
+        -- generate command --
+        generate: bool, whether to generate
+        generate_types: list, types of generation
+
+        -- generate_interpolation command --
+        generate_interpolation: bool, whether to use interpolation
+        interpolation_num_steps: int, number of interpolation steps
+        save_frames: bool, whether to save frames
+
+        -- aug_test command --
+        aug_test: bool, whether to use augmentation test
+
+        -- show_progress command --
+        show_progress: bool, whether to show progress
+
+        multi_gpus: bool, whether to use multi gpu
+
+        -- run_training args --
         data: str, path to data
+        new: bool, whether to create new model
+        load_from: int, load model from this checkpoint
+        num_train_steps: int, number of training steps
+        seed: int, seed for random number generator
+        use_aim: bool, whether to use AIM
+        aim_repo: str, path to AIM repository
+        aim_run_hash: str, hash of AIM run
+
+        -- model args --
         results_dir: str, path to results
         models_dir: str, path to models
         name: str, name of training
-        new: bool, whether to create new model
-        load_from: int, load model from this checkpoint
         image_size: int, image size
         optimizer: str, optimizer
         fmap_max: int, fmap max
@@ -155,14 +185,9 @@ def train_from_folder(
         greyscale: bool, whether to use greyscale
         batch_size: int, batch size
         gradient_accumulate_every: int, gradient accumulate every
-        num_train_steps: int, number of training steps
         learning_rate: float, learning rate
         save_every: int, save every
         evaluate_every: int, evaluate every
-        generate: bool, whether to generate
-        generate_types: list, types of generation
-        generate_interpolation: bool, whether to use interpolation
-        aug_test: bool, whether to use augmentation test
         aug_prob: float, probability of augmentation
         aug_types: list, types of augmentation
         dataset_aug_prob: float, probability of dataset augmentation
@@ -171,20 +196,12 @@ def train_from_folder(
         disc_output_size: int, discriminator output size
         dual_contrast_loss: bool, whether to use dual contrast loss
         antialias: bool, whether to use antialias
-        interpolation_num_steps: int, number of interpolation steps
-        save_frames: bool, whether to save frames
         num_image_tiles: int, number of image tiles
         num_workers: int, number of workers
-        multi_gpus: bool, whether to use multi gpu
         calculate_fid_every: int, calculate fid every
         calculate_fid_num_images: int, number of images to calculate fid
         clear_fid_cache: bool, whether to clear fid cache
-        seed: int, seed for random number generator
         amp: bool, whether to use amp
-        show_progress: bool, whether to show progress
-        use_aim: bool, whether to use AIM
-        aim_repo: str, path to AIM repository
-        aim_run_hash: str, hash of AIM run
         load_strict: bool, whether to load strict
 
     Returns:

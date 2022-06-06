@@ -29,10 +29,6 @@ from tqdm import tqdm
 from lightweight_gan.diff_augment import DiffAugment
 from lightweight_gan.version import __version__
 
-# asserts
-
-assert torch.cuda.is_available(), "You need to have an Nvidia GPU with CUDA installed."
-
 # constants
 
 NUM_CORES = multiprocessing.cpu_count()
