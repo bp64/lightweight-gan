@@ -105,6 +105,11 @@ class Trainer:
         *args,
         **kwargs,
     ):
+        """Class that handles:
+        - training
+        - evaluation
+        - image generation
+        - loading/saving data"""
         self.GAN_params = [args, kwargs]
         self.GAN = None
 
@@ -218,6 +223,7 @@ class Trainer:
         return floor(self.steps // self.save_every)
 
     def init_GAN(self):
+        """instantiate GAN on class"""
         args, kwargs = self.GAN_params
 
         # set some global variables before instantiating GAN
@@ -269,9 +275,11 @@ class Trainer:
             self.D_aug_ddp = DDP(self.GAN.D_aug, **ddp_kwargs)
 
     def write_config(self):
+        """write config to disk"""
         self.config_path.write_text(json.dumps(self.config()))
 
     def load_config(self):
+        """load config from disk"""
         config = (
             self.config()
             if not self.config_path.exists()
@@ -290,6 +298,7 @@ class Trainer:
         self.init_GAN()
 
     def config(self):
+        """returns a dictionary of the current configuration"""
         return {
             "image_size": self.image_size,
             "transparent": self.transparent,
@@ -302,6 +311,7 @@ class Trainer:
         }
 
     def set_data_src(self, folder):
+        """load dataset and prep for training"""
         num_workers = default(self.num_workers, math.ceil(NUM_CORES / self.world_size))
         self.dataset = ImageDataset(
             folder,
@@ -337,6 +347,7 @@ class Trainer:
             )
 
     def train(self):
+        """train loaded GAN"""
         assert exists(
             self.loader
         ), "You must first initialize the data source with `.set_data_src(<folder of images>)`"
@@ -558,6 +569,7 @@ class Trainer:
 
     @torch.no_grad()
     def evaluate(self, num=0, num_image_tiles=4):
+        """evaluate gan, generate and save images"""
         self.GAN.eval()
 
         ext = self.image_extension
@@ -654,6 +666,7 @@ class Trainer:
     def generate(
         self, num=0, num_image_tiles=4, checkpoint=None, types=["default", "ema"]
     ):
+        """generate images and save"""
         self.GAN.eval()
 
         latent_dim = self.GAN.latent_dim
@@ -688,6 +701,7 @@ class Trainer:
 
     @torch.no_grad()
     def show_progress(self, num_images=4, types=["default", "ema"]):
+        """show progress of training"""
         checkpoints = self.get_checkpoints()
         assert exists(
             checkpoints
@@ -732,6 +746,7 @@ class Trainer:
 
     @torch.no_grad()
     def calculate_fid(self, num_batches):
+        "calc fid score"
         from pytorch_fid import fid_score
 
         torch.cuda.empty_cache()
@@ -791,6 +806,7 @@ class Trainer:
     def generate_interpolation(
         self, num=0, num_image_tiles=8, num_steps=100, save_frames=False
     ):
+        """generate interpolated images and save to disk"""
         self.GAN.eval()
         ext = self.image_extension
         num_rows = num_image_tiles
@@ -853,13 +869,16 @@ class Trainer:
         return data
 
     def model_name(self, num):
+        """returns model filepath"""
         return str(self.models_dir / self.name / f"model_{num}.pt")
 
     def init_folders(self):
+        """create folders for results and models"""
         (self.results_dir / self.name).mkdir(parents=True, exist_ok=True)
         (self.models_dir / self.name).mkdir(parents=True, exist_ok=True)
 
     def clear(self):
+        """delete all files in models, results, fid, and config_path folders"""
         rmtree(str(self.models_dir / self.name), True)
         rmtree(str(self.results_dir / self.name), True)
         rmtree(str(self.fid_dir), True)
@@ -878,6 +897,7 @@ class Trainer:
         self.write_config()
 
     def load(self, num=-1, print_version=True):
+        """load config, then load model parameters"""
         self.load_config()
 
         name = num
