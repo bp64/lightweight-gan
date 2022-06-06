@@ -8,7 +8,8 @@ import torchvision
 from torch import nn
 from torch.utils.data import DataLoader
 
-from lightweight_gan.lightweight_gan import AugWrapper, ImageDataset
+from lightweight_gan.lightweight_gan import AugWrapper
+from lightweight_gan.trainer import ImageDataset
 
 assert torch.cuda.is_available(), "You need to have an Nvidia GPU with CUDA installed."
 
