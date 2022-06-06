@@ -11,7 +11,7 @@ from kornia.filters import filter2d
 from torch import einsum, nn
 from torch.optim import Adam
 
-from lightweight_gan.diff_augment import DiffAugment
+from lightweight_gan.diff_augment import DiffAugment, random_hflip
 from lightweight_gan.utils import (
     default,
     exists,
@@ -207,12 +207,6 @@ class LinearAttention(nn.Module):
 
 
 # augmentations
-
-
-def random_hflip(tensor, prob):
-    if prob > random():
-        return tensor
-    return torch.flip(tensor, dims=(3,))
 
 
 class AugWrapper(nn.Module):

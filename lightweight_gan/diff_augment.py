@@ -21,6 +21,12 @@ def DiffAugment(x, types=[]):
 # """
 
 
+def random_hflip(tensor, prob):
+    if prob > random():
+        return tensor
+    return torch.flip(tensor, dims=(3,))
+
+
 def rand_brightness(x):
     x = x + (torch.rand(x.size(0), 1, 1, 1, dtype=x.dtype, device=x.device) - 0.5)
     return x
