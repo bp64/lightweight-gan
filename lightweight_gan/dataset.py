@@ -5,12 +5,10 @@ from random import random
 import torch
 import torchvision
 from PIL import Image
-from torch import nn
 from torch.utils.data import Dataset
 from torchvision import transforms
 
 from lightweight_gan.utils import exists
-from lightweight_gan.version import __version__
 
 EXTS = ["jpg", "jpeg", "png"]
 
