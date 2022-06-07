@@ -53,16 +53,9 @@ def resize_to_minimum_size(min_size, image):
     return image
 
 
-class RandomApply(nn.Module):
-    def __init__(self, prob, fn, fn_else=lambda x: x):
-        super().__init__()
-        self.fn = fn
-        self.fn_else = fn_else
-        self.prob = prob
-
-    def forward(self, x):
-        fn = self.fn if random() < self.prob else self.fn_else
-        return fn(x)
+def random_apply(prob, fn1, fn2):
+    """randomly apply one of two functions"""
+    return fn1 if random() < prob else fn2
 
 
 class ImageDataset(Dataset):
@@ -86,7 +79,7 @@ class ImageDataset(Dataset):
         else:
             num_channels = 3
             pillow_mode = "RGB"
-            expand_fn = expand_greyscale(transparent)
+            expand_fn = partial(expand_greyscale, transparent=False)
 
         convert_image_fn = partial(convert_image_to, pillow_mode)
 
@@ -95,12 +88,12 @@ class ImageDataset(Dataset):
                 transforms.Lambda(convert_image_fn),
                 transforms.Lambda(partial(resize_to_minimum_size, image_size)),
                 transforms.Resize(image_size),
-                RandomApply(
+                random_apply(
                     aug_prob,
+                    transforms.CenterCrop(image_size),
                     transforms.RandomResizedCrop(
                         image_size, scale=(0.5, 1.0), ratio=(0.98, 1.02)
                     ),
-                    transforms.CenterCrop(image_size),
                 ),
                 transforms.ToTensor(),
                 transforms.Lambda(expand_fn),
