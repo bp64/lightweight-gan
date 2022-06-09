@@ -1,36 +1,43 @@
+import os
+from io import BytesIO
+from itertools import product
+from pathlib import Path
+
 import pytest
 from lightweight_gan.dataset import ImageDataset
+from PIL import Image
+from pytest import FixtureRequest, TempPathFactory
+
+FORMATS = ["PNG", "JPEG"]
+MODES = ["RGB", "RGBA"]
+SIZES = [(128, 128), (128, 256), (256, 128)]
 
 
-@pytest.fixture
-def jpeg_image():
-    jpg = BytesIO()
-    im = Image.new("RGB", (100, 200), color=200)
-    im.save(jpg, format="jpeg")
-    yield jpg
-    im.close()
+def create_image(mode: str, size: tuple[int], format: str) -> BytesIO:
+    buf = BytesIO()
+    with Image.new(mode=mode, size=size) as im:
+        im.save(buf, format=format)
+    return buf
 
 
-@pytest.fixture
-def png_image():
-    png = BytesIO()
-    im = Image.new("RGB", (100, 200), color=200)
-    im.save(png, format="png")
-    yield png
-    png.close()
+@pytest.fixture(scope="session", params=FORMATS)
+def img_dir(tmp_path_factory: TempPathFactory, request: FixtureRequest) -> Path:
+    format = request.param
+    img_dir = tmp_path_factory.mktemp(format, numbered=False)
+    img_configs = product(MODES, SIZES)
+    for mode, size in img_configs:
+        bytes = create_image(mode=mode, size=size, format=format)
+        with open(img_dir / f"{mode}_{size}.png", mode="wb") as f:
+            f.write(bytes.getbuffer())
+    yield img_dir
 
 
-@pytest.fixture
-def create_png_data_dir(tmp_path_factory):
-    data_dir = tmp_path_factory.mktemp("png")
-    yield data_dir.as_posix()
+@pytest.fixture(scope="session")
+def images_dir(tmp_path_factory: TempPathFactory) -> Path:
+    image_dir = tmp_path_factory.mktemp("images")
+    yield image_dir
 
 
-@pytest.fixture
-def png_jpg_images(png_image, jpeg_image):
-    yield png_image, jpeg_image
-
-
-def test_dataset_opens_jpeg(jpeg_image):
-    ImageDataset()
+def test_dataset_opens_png(img_dir: Path):
+    dataset = ImageDataset(folder=img_dir, image_size=100)
     assert True
